@@ -23,7 +23,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"go.opentelemetry.io/collector/client"
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/extension/auth"
+	"go.opentelemetry.io/collector/extension/extensionauth"
 	"go.uber.org/zap"
 )
 
@@ -40,7 +40,7 @@ var (
 	errNotAuthenticated                  = errors.New("authentication didn't succeed")
 )
 
-func newExtension(cfg *Config, logger *zap.Logger) (auth.Server, error) {
+func newExtension(cfg *Config, logger *zap.Logger) (extensionauth.Server, error) {
 	if cfg.JWTSecret == "" {
 		return nil, errNoJWTSecretProvided
 	}
@@ -55,10 +55,15 @@ func newExtension(cfg *Config, logger *zap.Logger) (auth.Server, error) {
 		jwtSecret: []byte(cfg.JWTSecret),
 	}
 
-	return auth.NewServer(auth.WithServerStart(oe.start), auth.WithServerAuthenticate(oe.authenticate)), nil
+	return extensionauth.NewServer(extensionauth.WithServerStart(oe.start),
+		extensionauth.WithServerAuthenticate(oe.authenticate), extensionauth.WithServerShutdown(oe.shutdown))
 }
 
 func (e *jwtExtension) start(context.Context, component.Host) error {
+	return nil
+}
+
+func (e *jwtExtension) shutdown(context.Context) error {
 	return nil
 }
 
